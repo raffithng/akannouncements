@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AK Announcement Generator</title>
+<style>
+  :root {
+    --bg: #0f0f0f;
+    --card: #1a1a1a;
+    --border: #333;
+    --accent: #25D366;
+    --accent2: #229ED9;
+    --text: #e0e0e0;
+    --muted: #888;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    padding: 20px;
+    max-width: 960px;
+    margin: 0 auto;
+  }
+  h1 { font-size: 1.5rem; margin-bottom: 4px; color: #fff; }
+  .subtitle { color: var(--muted); font-size: 0.9rem; margin-bottom: 20px; }
+  .section {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+  .section h2 { font-size: 1rem; margin-bottom: 12px; color: var(--accent); }
+  label { display: block; font-size: 0.85rem; color: var(--muted); margin-bottom: 4px; }
+  input[type="date"], .text-input {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 0.95rem;
+  }
+  input[type="date"] { width: 220px; }
+  .text-input { width: 100%; }
+  .text-input-sm { width: 280px; }
+  .day-group {
+    border-bottom: 1px solid var(--border);
+    padding: 10px 0;
+  }
+  .day-group:last-child { border-bottom: none; }
+  .day-header {
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: #fff;
+    margin-bottom: 6px;
+  }
+  .day-date { color: var(--muted); font-size: 0.8rem; margin-left: 6px; }
+  .class-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 0 4px 20px;
+  }
+  .class-row input[type="checkbox"] {
+    accent-color: var(--accent);
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+  }
+  .class-row input[type="text"] {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 5px 8px;
+    border-radius: 4px;
+    font-size: 0.85rem;
+  }
+  .class-row .time-input { width: 110px; text-align: center; }
+  .class-row .name-input { flex: 1; }
+  .class-row.disabled input[type="text"] { opacity: 0.35; }
+  .btn-row { display: flex; gap: 10px; margin-top: 6px; flex-wrap: wrap; }
+  button {
+    padding: 10px 18px;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.2s;
+  }
+  button:hover { opacity: 0.88; }
+  .btn-generate { background: var(--accent); color: #000; }
+  .btn-copy-wa { background: var(--accent); color: #000; }
+  .btn-copy-tg { background: var(--accent2); color: #fff; }
+  .output-box {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px;
+    white-space: pre-wrap;
+    font-family: monospace;
+    font-size: 0.83rem;
+    line-height: 1.55;
+    min-height: 120px;
+    color: var(--text);
+  }
+  .copied {
+    color: var(--accent);
+    font-size: 0.8rem;
+    margin-left: 8px;
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  .copied.show { opacity: 1; }
+  .add-class-btn {
+    background: transparent;
+    border: 1px dashed var(--border);
+    color: var(--muted);
+    padding: 4px 12px;
+    font-size: 0.8rem;
+    margin: 4px 0 0 20px;
+    border-radius: 4px;
+  }
+  .remove-btn {
+    background: transparent;
+    border: none;
+    color: #ff6666;
+    cursor: pointer;
+    font-size: 1rem;
+    padding: 0 4px;
+    line-height: 1;
+  }
+  .tabs, .mode-tabs { display: flex; gap: 6px; flex-wrap: wrap; }
+  .mode-tabs { margin-bottom: 16px; }
+  .tab {
+    padding: 8px 14px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+  }
+  .tab.active-mode,
+  .tab.active-wa {
+    background: var(--accent);
+    color: #000;
+    border-color: var(--accent);
+  }
+  .tab.active-tg {
+    background: var(--accent2);
+    color: #fff;
+    border-color: var(--accent2);
+  }
+  .field-row { margin-bottom: 10px; }
+  .muted-line {
+    color: var(--muted);
+    font-size: 0.82rem;
+    margin-top: 4px;
+  }
+</style>
+</head>
+<body>
+
+<h1>📢 Al Khaadem Announcement Generator</h1>
+<p class="subtitle">Generate weekday and weekend broadcast messages for WhatsApp and Telegram</p>
+
+<div class="mode-tabs">
+  <button class="tab active-mode" id="modeWeekdayBtn" onclick="switchMode('weekday')">Weekday Programmes</button>
+  <button class="tab" id="modeWeekendBtn" onclick="switchMode('weekend')">Weekend Announcements</button>
+</div>
+
+<div id="weekdayMode">
+  <div class="section">
+    <h2>📅 Select Week</h2>
+    <label>Week starting (Monday)</label>
+    <input type="date" id="weekStart" onchange="updateDates()">
+  </div>
+
+  <div class="section">
+    <h2>📋 Weekday Classes</h2>
+    <div id="classEditorWeekday"></div>
+  </div>
+</div>
+
+<div id="weekendMode" style="display:none;">
+  <div class="section">
+    <h2>📅 Select Week</h2>
+    <label>Week starting (Monday)</label>
+    <input type="date" id="weekStartWeekend" onchange="updateWeekendDates()">
+  </div>
+
+  <div class="section">
+    <h2>📋 Weekend Classes</h2>
+    <div id="classEditorWeekend"></div>
+  </div>
+</div>
+
+<div class="section">
+  <h2>⚙️ Footer Settings</h2>
+  <div class="field-row">
+    <label>Telegram Channel URL</label>
+    <input type="text" id="telegramUrl" class="text-input" value="https://t.me/servingmankindtv">
+  </div>
+  <div class="field-row">
+    <label>Phone Number</label>
+    <input type="text" id="phoneNum" class="text-input text-input-sm" value="03 7724-1590">
+  </div>
+  <div class="field-row">
+    <label>Email</label>
+    <input type="text" id="emailAddr" class="text-input text-input-sm" value="admin@alkhaadem.com">
+  </div>
+  <p class="muted-line">Telegram output uses simple copyable markdown. Each class line is fully code styled.</p>
+</div>
+
+<div class="btn-row">
+  <button class="btn-generate" onclick="generate()">⚡ Generate</button>
+</div>
+
+<div class="section" id="outputSection" style="display:none; margin-top: 16px;">
+  <h2>📤 Output</h2>
+  <div class="tabs" style="margin-bottom:10px;">
+    <button class="tab active-wa" id="tabWA" onclick="switchOutputTab('wa')">WhatsApp</button>
+    <button class="tab" id="tabTG" onclick="switchOutputTab('tg')">Telegram</button>
+  </div>
+
+  <div id="panelWA">
+    <div class="output-box" id="outputBoxWA"></div>
+    <div style="margin-top:10px; display:flex; align-items:center;">
+      <button class="btn-copy-wa" onclick="copyText(generatedWA, 'copiedMsgWA')">📋 Copy for WhatsApp</button>
+      <span class="copied" id="copiedMsgWA">✓ Copied!</span>
+    </div>
+  </div>
+
+  <div id="panelTG" style="display:none;">
+    <div class="output-box" id="outputBoxTG"></div>
+    <div style="margin-top:10px; display:flex; align-items:center;">
+      <button class="btn-copy-tg" onclick="copyText(generatedTG, 'copiedMsgTG')">📋 Copy for Telegram</button>
+      <span class="copied" id="copiedMsgTG">✓ Copied!</span>
+    </div>
+  </div>
+</div>
+
+<script>
+const DAYS = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+let currentMode = 'weekday';
+let currentOutputTab = 'wa';
+let generatedWA = '';
+let generatedTG = '';
+
+let weekdayClasses = [
+  { day: 0, time: '8:00 PM', name: 'Arabic for Understanding The Quran', enabled: true },
+  { day: 1, time: '5:30 PM', name: 'Tadabbur for the Righteous', enabled: true },
+  { day: 1, time: '8:00 PM', name: "Jami' As-Sahihain", enabled: true },
+  { day: 2, time: '11:15 AM', name: "Don't Be Sad", enabled: true },
+  { day: 2, time: '6:00 PM', name: 'Mai Mengaji Sekali', enabled: true }
+];
+
+let weekendClasses = [
+  { day: 5, time: '11:15 AM', name: 'New Muslims Community: The Foundation of the Deen', enabled: true },
+  { day: 6, time: '11:15 AM', name: 'Islamic Etiquette', enabled: true }
+];
+
+function getMonday(elId) {
+  const input = document.getElementById(elId);
+  if (!input.value) return null;
+  return new Date(input.value + 'T00:00:00');
+}
+
+function initDate() {
+  const now = new Date();
+  const dow = now.getDay();
+  const diffToMon = dow === 0 ? -6 : 1 - dow;
+  const thisMon = new Date(now);
+  thisMon.setDate(now.getDate() + diffToMon);
+  const val = thisMon.toISOString().split('T')[0];
+  document.getElementById('weekStart').value = val;
+  document.getElementById('weekStartWeekend').value = val;
+  renderEditor('weekday');
+  renderEditor('weekend');
+}
+
+function updateDates() {
+  renderEditor('weekday');
+}
+
+function updateWeekendDates() {
+  renderEditor('weekend');
+}
+
+function formatDate(date) {
+  const m = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  return date.getDate() + ' ' + m[date.getMonth()];
+}
+
+function escAttr(s) {
+  return String(s).replace(/"/g, '&quot;');
+}
+
+function getClasses(mode) {
+  return mode === 'weekday' ? weekdayClasses : weekendClasses;
+}
+
+function setClasses(mode, arr) {
+  if (mode === 'weekday') {
+    weekdayClasses = arr;
+  } else {
+    weekendClasses = arr;
+  }
+}
+
+function getContainerId(mode) {
+  return mode === 'weekday' ? 'classEditorWeekday' : 'classEditorWeekend';
+}
+
+function getWeekInputId(mode) {
+  return mode === 'weekday' ? 'weekStart' : 'weekStartWeekend';
+}
+
+function allowedDays(mode) {
+  return mode === 'weekday' ? [0,1,2,3,4] : [5,6];
+}
+
+function renderEditor(mode) {
+  const monday = getMonday(getWeekInputId(mode));
+  const classes = getClasses(mode);
+  const container = document.getElementById(getContainerId(mode));
+  container.innerHTML = '';
+  const grouped = {};
+
+  classes.forEach((c, i) => {
+    if (!grouped[c.day]) grouped[c.day] = [];
+    grouped[c.day].push({ ...c, idx: i });
+  });
+
+  allowedDays(mode).forEach(d => {
+    const dayDiv = document.createElement('div');
+    dayDiv.className = 'day-group';
+    let dateStr = '';
+    if (monday) {
+      const dd = new Date(monday);
+      dd.setDate(monday.getDate() + d);
+      dateStr = formatDate(dd);
+    }
+    dayDiv.innerHTML = '<div class="day-header">' + DAYS[d] + '<span class="day-date"> - ' + dateStr + '</span></div>';
+
+    const rows = grouped[d] || [];
+    rows.forEach(c => {
+      const row = document.createElement('div');
+      row.className = 'class-row' + (c.enabled ? '' : ' disabled');
+      row.innerHTML =
+        '<input type="checkbox" ' + (c.enabled ? 'checked' : '') + ' onchange="toggleClass(\'' + mode + '\',' + c.idx + ',this.checked)">' +
+        '<input type="text" class="time-input" value="' + escAttr(c.time) + '" onchange="updateClass(\'' + mode + '\',' + c.idx + ',\'time\',this.value)">' +
+        '<input type="text" class="name-input" value="' + escAttr(c.name) + '" onchange="updateClass(\'' + mode + '\',' + c.idx + ',\'name\',this.value)">' +
+        '<button class="remove-btn" onclick="removeClass(\'' + mode + '\',' + c.idx + ')" title="Remove">✕</button>';
+      dayDiv.appendChild(row);
+    });
+
+    const addBtn = document.createElement('button');
+    addBtn.className = 'add-class-btn';
+    addBtn.textContent = '+ Add class to ' + DAYS[d];
+    addBtn.onclick = () => addClass(mode, d);
+    dayDiv.appendChild(addBtn);
+    container.appendChild(dayDiv);
+  });
+}
+
+function toggleClass(mode, i, v) {
+  const classes = getClasses(mode);
+  classes[i].enabled = v;
+  renderEditor(mode);
+}
+
+function updateClass(mode, i, field, value) {
+  const classes = getClasses(mode);
+  classes[i][field] = value;
+}
+
+function removeClass(mode, i) {
+  const classes = getClasses(mode);
+  classes.splice(i, 1);
+  setClasses(mode, classes);
+  renderEditor(mode);
+}
+
+function addClass(mode, day) {
+  const classes = getClasses(mode);
+  classes.push({ day, time: '11:15 AM', name: 'New Class', enabled: true });
+  classes.sort((a, b) => a.day - b.day);
+  setClasses(mode, classes);
+  renderEditor(mode);
+}
+
+function switchMode(mode) {
+  currentMode = mode;
+  document.getElementById('weekdayMode').style.display = mode === 'weekday' ? 'block' : 'none';
+  document.getElementById('weekendMode').style.display = mode === 'weekend' ? 'block' : 'none';
+  document.getElementById('modeWeekdayBtn').className = 'tab' + (mode === 'weekday' ? ' active-mode' : '');
+  document.getElementById('modeWeekendBtn').className = 'tab' + (mode === 'weekend' ? ' active-mode' : '');
+}
+
+function switchOutputTab(tab) {
+  currentOutputTab = tab;
+  document.getElementById('tabWA').className = 'tab' + (tab === 'wa' ? ' active-wa' : '');
+  document.getElementById('tabTG').className = 'tab' + (tab === 'tg' ? ' active-tg' : '');
+  document.getElementById('panelWA').style.display = tab === 'wa' ? 'block' : 'none';
+  document.getElementById('panelTG').style.display = tab === 'tg' ? 'block' : 'none';
+  document.getElementById('outputBoxWA').textContent = generatedWA;
+  document.getElementById('outputBoxTG').textContent = generatedTG;
+}
+
+function buildFooter() {
+  const telegramUrl = document.getElementById('telegramUrl').value.trim();
+  const phone = document.getElementById('phoneNum').value.trim();
+  const email = document.getElementById('emailAddr').value.trim();
+
+  return {
+    wa: '________\n\nFor latest updates about Palestine, follow this Telegram channel: ' + telegramUrl + '\n\n_This is a broadcast message. Please do not reply. For any enquiries please call ' + phone + ' or email us at ' + email + '._',
+    tg: '________\n\nFor latest updates about Palestine, follow this Telegram channel: ' + telegramUrl + '\n\n__This is a broadcast message. Please do not reply. For any enquiries please call ' + phone + ' or email us at ' + email + '.__'
+  };
+}
+
+function generateFrom(mode) {
+  const monday = getMonday(getWeekInputId(mode));
+  if (!monday) {
+    alert('Please select a week start date.');
+    return;
+  }
+
+  const classes = getClasses(mode).filter(c => c.enabled);
+  const grouped = {};
+  classes.forEach(c => {
+    if (!grouped[c.day]) grouped[c.day] = [];
+    grouped[c.day].push(c);
+  });
+
+  const footer = buildFooter();
+  const heading = mode === 'weekday' ? 'Weekday Community Programmes' : 'Weekend Community Programmes';
+  const dayOrder = allowedDays(mode).filter(d => grouped[d] && grouped[d].length);
+
+  let wa = '*' + heading + '*\n\n';
+  let tg = '**' + heading + '**\n\n';
+
+  dayOrder.forEach((d, idx) => {
+    const dd = new Date(monday);
+    dd.setDate(monday.getDate() + d);
+
+    wa += '*' + DAYS[d] + ' - ' + formatDate(dd) + '*\n';
+    tg += '**' + DAYS[d] + ' - ' + formatDate(dd) + '**\n';
+
+    grouped[d].forEach(c => {
+      wa += c.time + ' ' + c.name + '\n';
+      tg += '`' + c.time + ' ' + c.name + '`\n';
+    });
+
+    if (idx < dayOrder.length - 1) {
+      wa += '\n';
+      tg += '\n';
+    }
+  });
+
+  generatedWA = wa + footer.wa;
+  generatedTG = tg + footer.tg;
+}
+
+function generate() {
+  generateFrom(currentMode);
+  document.getElementById('outputSection').style.display = 'block';
+  switchOutputTab(currentOutputTab);
+}
+
+function copyText(text, flashId) {
+  navigator.clipboard.writeText(text).then(() => flash(flashId));
+}
+
+function flash(id) {
+  const el = document.getElementById(id);
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2000);
+}
+
+initDate();
+</script>
+
+</body>
+</html>
