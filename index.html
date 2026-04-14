@@ -165,11 +165,12 @@
 <body>
 
 <h1>📢 Al Khaadem Announcement Generator</h1>
-<p class="subtitle">Generate weekday and weekend broadcast messages for WhatsApp and Telegram</p>
+<p class="subtitle">Generate weekday, weekend, and cancelled-class broadcast messages for WhatsApp and Telegram</p>
 
 <div class="mode-tabs">
   <button class="tab active-mode" id="modeWeekdayBtn" onclick="switchMode('weekday')">Weekday Programmes</button>
   <button class="tab" id="modeWeekendBtn" onclick="switchMode('weekend')">Weekend Announcements</button>
+  <button class="tab" id="modeCancelledBtn" onclick="switchMode('cancelled')">Cancelled Classes</button>
 </div>
 
 <div id="weekdayMode">
@@ -195,6 +196,19 @@
   <div class="section">
     <h2>📋 Weekend Classes</h2>
     <div id="classEditorWeekend"></div>
+  </div>
+</div>
+
+<div id="cancelledMode" style="display:none;">
+  <div class="section">
+    <h2>📅 Select Week</h2>
+    <label>Week starting (Monday)</label>
+    <input type="date" id="weekStartCancelled" onchange="updateCancelledDates()">
+  </div>
+
+  <div class="section">
+    <h2>🚫 Cancelled Programmes</h2>
+    <div id="classEditorCancelled"></div>
   </div>
 </div>
 
@@ -263,6 +277,12 @@ let weekendClasses = [
   { day: 6, time: '11:15 AM', name: 'Islamic Etiquette', enabled: true }
 ];
 
+function buildCancelledTemplates() {
+  return [...weekdayClasses, ...weekendClasses].map(c => ({ ...c }));
+}
+
+let cancelledClasses = buildCancelledTemplates();
+
 function getMonday(elId) {
   const input = document.getElementById(elId);
   if (!input.value) return null;
@@ -278,8 +298,10 @@ function initDate() {
   const val = thisMon.toISOString().split('T')[0];
   document.getElementById('weekStart').value = val;
   document.getElementById('weekStartWeekend').value = val;
+  document.getElementById('weekStartCancelled').value = val;
   renderEditor('weekday');
   renderEditor('weekend');
+  renderEditor('cancelled');
 }
 
 function updateDates() {
@@ -290,9 +312,19 @@ function updateWeekendDates() {
   renderEditor('weekend');
 }
 
+function updateCancelledDates() {
+  renderEditor('cancelled');
+}
+
 function formatDate(date) {
   const m = ['January','February','March','April','May','June','July','August','September','October','November','December'];
   return date.getDate() + ' ' + m[date.getMonth()];
+}
+
+function formatFullDate(date) {
+  const dayNames = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const m = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  return dayNames[date.getDay()] + ', ' + date.getDate() + ' ' + m[date.getMonth()] + ' ' + date.getFullYear();
 }
 
 function escAttr(s) {
@@ -300,27 +332,37 @@ function escAttr(s) {
 }
 
 function getClasses(mode) {
-  return mode === 'weekday' ? weekdayClasses : weekendClasses;
+  if (mode === 'weekday') return weekdayClasses;
+  if (mode === 'weekend') return weekendClasses;
+  return cancelledClasses;
 }
 
 function setClasses(mode, arr) {
   if (mode === 'weekday') {
     weekdayClasses = arr;
-  } else {
+  } else if (mode === 'weekend') {
     weekendClasses = arr;
+  } else {
+    cancelledClasses = arr;
   }
 }
 
 function getContainerId(mode) {
-  return mode === 'weekday' ? 'classEditorWeekday' : 'classEditorWeekend';
+  if (mode === 'weekday') return 'classEditorWeekday';
+  if (mode === 'weekend') return 'classEditorWeekend';
+  return 'classEditorCancelled';
 }
 
 function getWeekInputId(mode) {
-  return mode === 'weekday' ? 'weekStart' : 'weekStartWeekend';
+  if (mode === 'weekday') return 'weekStart';
+  if (mode === 'weekend') return 'weekStartWeekend';
+  return 'weekStartCancelled';
 }
 
 function allowedDays(mode) {
-  return mode === 'weekday' ? [0,1,2,3,4] : [5,6];
+  if (mode === 'weekend') return [5,6];
+  if (mode === 'cancelled') return [0,1,2,3,4,5,6];
+  return [0,1,2,3,4];
 }
 
 function renderEditor(mode) {
@@ -397,8 +439,10 @@ function switchMode(mode) {
   currentMode = mode;
   document.getElementById('weekdayMode').style.display = mode === 'weekday' ? 'block' : 'none';
   document.getElementById('weekendMode').style.display = mode === 'weekend' ? 'block' : 'none';
+  document.getElementById('cancelledMode').style.display = mode === 'cancelled' ? 'block' : 'none';
   document.getElementById('modeWeekdayBtn').className = 'tab' + (mode === 'weekday' ? ' active-mode' : '');
   document.getElementById('modeWeekendBtn').className = 'tab' + (mode === 'weekend' ? ' active-mode' : '');
+  document.getElementById('modeCancelledBtn').className = 'tab' + (mode === 'cancelled' ? ' active-mode' : '');
 }
 
 function switchOutputTab(tab) {
@@ -422,6 +466,25 @@ function buildFooter() {
   };
 }
 
+function buildCancelledFooter() {
+  const telegramUrl = document.getElementById('telegramUrl').value.trim();
+  const phone = document.getElementById('phoneNum').value.trim();
+  const email = document.getElementById('emailAddr').value.trim();
+  const wa = '__ \n\n_For latest updates about Palestine, follow this Telegram channel: ' + telegramUrl + '_\n\n_This is a broadcast message. Please do not reply. For any enquiries please call ' + phone + ' or email us at ' + email + '_';
+  const tg = '________\n\nFor latest updates about Palestine, follow this Telegram channel: ' + telegramUrl + '\n\n__This is a broadcast message. Please do not reply. For any enquiries please call ' + phone + ' or email us at ' + email + '.__';
+
+  return { wa, tg };
+}
+
+function getCancelledScope(classes) {
+  const hasWeekday = classes.some(c => c.day >= 0 && c.day <= 4);
+  const hasWeekend = classes.some(c => c.day >= 5 && c.day <= 6);
+
+  if (hasWeekday && !hasWeekend) return 'Weekday';
+  if (!hasWeekday && hasWeekend) return 'Weekend';
+  return '';
+}
+
 function generateFrom(mode) {
   const monday = getMonday(getWeekInputId(mode));
   if (!monday) {
@@ -430,11 +493,53 @@ function generateFrom(mode) {
   }
 
   const classes = getClasses(mode).filter(c => c.enabled);
+  if (!classes.length) {
+    alert('Please select at least one class.');
+    return;
+  }
+
   const grouped = {};
   classes.forEach(c => {
     if (!grouped[c.day]) grouped[c.day] = [];
     grouped[c.day].push(c);
   });
+
+  if (mode === 'cancelled') {
+    const footer = buildCancelledFooter();
+    const count = classes.length;
+    const noun = count === 1 ? 'Programme' : 'Programmes';
+    const verb = count === 1 ? 'is' : 'are';
+    const scope = getCancelledScope(classes);
+    const scopeLabel = scope ? scope + ' ' : '';
+    const dayOrder = allowedDays(mode).filter(d => grouped[d] && grouped[d].length);
+    let wa = '*' + noun + ' Cancelled*\n\n';
+    let tg = '**' + noun + ' Cancelled**\n\n';
+
+    wa += 'Please be advised that the following ' + scopeLabel + noun + ' ' + verb + ' *cancelled*:\n\n';
+    tg += 'Please be advised that the following ' + scopeLabel + noun + ' ' + verb + ' **cancelled**:\n\n';
+
+    dayOrder.forEach((d, idx) => {
+      const dd = new Date(monday);
+      dd.setDate(monday.getDate() + d);
+
+      wa += '*' + formatFullDate(dd) + '*\n';
+      tg += '**' + formatFullDate(dd) + '**\n';
+
+      grouped[d].forEach(c => {
+        wa += '> `' + c.time + '` ' + c.name + '\n';
+        tg += '`' + c.time + ' ' + c.name + '`\n';
+      });
+
+      if (idx < dayOrder.length - 1) {
+        wa += '\n';
+        tg += '\n';
+      }
+    });
+
+    generatedWA = wa + '\n' + footer.wa;
+    generatedTG = tg + footer.tg;
+    return;
+  }
 
   const footer = buildFooter();
   const heading = mode === 'weekday' ? 'Weekday Community Programmes' : 'Weekend Community Programmes';
