@@ -215,10 +215,6 @@
 <div class="section">
   <h2>⚙️ Footer Settings</h2>
   <div class="field-row">
-    <label>Telegram Channel URL</label>
-    <input type="text" id="telegramUrl" class="text-input" value="https://t.me/servingmankindtv">
-  </div>
-  <div class="field-row">
     <label>Phone Number</label>
     <input type="text" id="phoneNum" class="text-input text-input-sm" value="03 7724-1590">
   </div>
@@ -268,7 +264,6 @@ let weekdayClasses = [
   { day: 0, time: '8:00 PM', name: 'Arabic for Understanding The Quran', enabled: true },
   { day: 1, time: '5:30 PM', name: 'Tadabbur for the Righteous', enabled: true },
   { day: 1, time: '8:00 PM', name: "Jami' As-Sahihain", enabled: true },
-  { day: 2, time: '11:15 AM', name: "Don't Be Sad", enabled: true },
   { day: 2, time: '6:00 PM', name: 'Mai Mengaji Sekali', enabled: true },
   { day: 3, time: '8:00 PM', name: 'Sirah Nabi Berdasarkan Riwayat-riwayat Sahih', enabled: true }
 ];
@@ -457,22 +452,20 @@ function switchOutputTab(tab) {
 }
 
 function buildFooter() {
-  const telegramUrl = document.getElementById('telegramUrl').value.trim();
   const phone = document.getElementById('phoneNum').value.trim();
   const email = document.getElementById('emailAddr').value.trim();
 
   return {
-    wa: '________\n\nFor latest updates about Palestine, follow this Telegram channel: ' + telegramUrl + '\n\n_This is a broadcast message. Please do not reply. For any enquiries please call ' + phone + ' or email us at ' + email + '._',
-    tg: '________\n\nFor latest updates about Palestine, follow this Telegram channel: ' + telegramUrl + '\n\n__This is a broadcast message. Please do not reply. For any enquiries please call ' + phone + ' or email us at ' + email + '.__'
+    wa: '________\n\n_This is a broadcast message. Please do not reply. For any enquiries please call ' + phone + ' or email us at ' + email + '._',
+    tg: '________\n\n__This is a broadcast message. Please do not reply. For any enquiries please call ' + phone + ' or email us at ' + email + '.__'
   };
 }
 
 function buildCancelledFooter() {
-  const telegramUrl = document.getElementById('telegramUrl').value.trim();
   const phone = document.getElementById('phoneNum').value.trim();
   const email = document.getElementById('emailAddr').value.trim();
-  const wa = '__ \n\n_For latest updates about Palestine, follow this Telegram channel: ' + telegramUrl + '_\n\n_This is a broadcast message. Please do not reply. For any enquiries please call ' + phone + ' or email us at ' + email + '_';
-  const tg = '________\n\nFor latest updates about Palestine, follow this Telegram channel: ' + telegramUrl + '\n\n__This is a broadcast message. Please do not reply. For any enquiries please call ' + phone + ' or email us at ' + email + '.__';
+  const wa = '__ \n\n_This is a broadcast message. Please do not reply. For any enquiries please call ' + phone + ' or email us at ' + email + '_';
+  const tg = '________\n\n__This is a broadcast message. Please do not reply. For any enquiries please call ' + phone + ' or email us at ' + email + '.__';
 
   return { wa, tg };
 }
